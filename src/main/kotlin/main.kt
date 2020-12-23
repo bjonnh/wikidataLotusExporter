@@ -5,53 +5,42 @@
 
 package net.nprod.wikidataLotusExporter
 
-import net.nprod.wikidataLotusExporter.rdf.RDFRepository
-import net.nprod.wikidataLotusExporter.sparql.GetTaxonPairs
-import net.nprod.wikidataLotusExporter.sparql.SparqlRepository
+import kotlinx.cli.ArgParser
+import kotlinx.cli.ArgType
+import kotlinx.cli.ExperimentalCli
+import kotlinx.cli.Subcommand
+import kotlinx.cli.default
+import net.nprod.wikidataLotusExporter.modes.mirror.mirror
 import org.eclipse.rdf4j.model.IRI
-import org.eclipse.rdf4j.model.Statement
+import org.slf4j.LoggerFactory
 import java.io.File
 
-fun main() {
-    val sparqlRepository = SparqlRepository("https://query.wikidata.org/sparql")
-    val rdfRepository = RDFRepository(File("data/local_rdf"))
+fun IRI.getIDfromIRI(): String = this.stringValue().split("/").last()
 
-    val wdt = "http://www.wikidata.org/prop/direct/"
+@ExperimentalCli
+fun main(args: Array<String>) {
+    val logger = LoggerFactory.getLogger("net.nprod.wikidataLotusExporter")
 
-    rdfRepository.repository.connection.use { rdfConnection ->
-        val vf = rdfConnection.valueFactory
-        val presentInTaxon = vf.createIRI(wdt, "P703")
-        val instanceOf = vf.createIRI(wdt, "P31")
+    val parser = ArgParser("lotus_exporter")
+    val store by parser.option(
+        ArgType.String, "store", "s", "Where the data is going to be stored"
+    ).default("data/local_rdf")
 
-        val entries = mutableListOf<Statement>()
-        val getTaxonPairs = GetTaxonPairs()
-        sparqlRepository.query(getTaxonPairs.queryIds) {
-            it.map { bindingSet ->
-                val compoundID: IRI = bindingSet.getBinding("compound_id").value as IRI
-                val taxonID: IRI = bindingSet.getBinding("taxon_id").value as IRI
-                val type: IRI = bindingSet.getBinding("type").value as IRI
-                entries.add(vf.createStatement(compoundID, presentInTaxon, taxonID))
-                entries.add(vf.createStatement(compoundID, instanceOf, type))
-            }
+    var commandRun = false
+
+    class Mirror : Subcommand("mirror", "Mirror Wikidata entries related to LOTUS locally") {
+        override fun execute() {
+            val storeFile = File(store)
+            storeFile.mkdirs()
+            logger.info("Starting in mirroring mode into the repository: $store")
+            mirror(storeFile)
+            commandRun = true
         }
-        println("Done querying the compound-taxo couples")
-
-        entries.chunked(100).map {
-            val listOfCompounds = it.map { "wd:${it.subject.stringValue().split("/").last()}" }.joinToString(" ")
-            val taxoQuery = getTaxonPairs.queryTaxo.replace("%%IDS%%", listOfCompounds)
-            sparqlRepository.query(taxoQuery) {
-                it.map { bindingSet ->
-                    val compoundID: IRI = bindingSet.getBinding("compound_id").value as IRI
-                    val taxonID: IRI = bindingSet.getBinding("taxon_id").value as IRI
-                    val type: IRI = bindingSet.getBinding("type").value as IRI
-                    entries.add(vf.createStatement(compoundID, presentInTaxon, taxonID))
-                    entries.add(vf.createStatement(compoundID, instanceOf, type))
-                }
-            }
-        }
-        println("Done querying the compounds")
-        rdfConnection.add(entries)
-
-        println(rdfConnection.size())
     }
+
+    parser.subcommands(Mirror())
+    parser.parse(args)
+
+    if (!commandRun) logger.error("Please use at least one of the commands, check the help: -h")
+    logger.info("We are done, go Kotlin \\o/")
 }

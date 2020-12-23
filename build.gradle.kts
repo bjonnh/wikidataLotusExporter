@@ -29,10 +29,10 @@ val jar by tasks.getting(Jar::class) {
 dependencies {
     val junitVersion: String by project
     val rdf4jVersion: String by project
-    val kotlinVersion: String by project
     val log4jVersion: String by project
+    val kotlinxCliVersion: String by project
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-cli:$kotlinxCliVersion")
 
     implementation("org.eclipse.rdf4j:rdf4j-repository-sail:$rdf4jVersion")
     implementation("org.eclipse.rdf4j:rdf4j-sail-nativerdf:$rdf4jVersion")

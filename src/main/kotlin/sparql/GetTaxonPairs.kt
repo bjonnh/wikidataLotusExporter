@@ -23,14 +23,40 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX bd: <http://www.bigdata.com/rdf#> 
 """.trimIndent()
 
-    val queryIds = """$prefixes
-SELECT
-  ?compound_id ?taxon_id ?type
+    val queryCompoundTaxonRef = """$prefixes
+CONSTRUCT {
+  ?compound_id wdt:P31 ?type;
+               wdt:P703 ?taxon_id;
+               p:P703 ?p703.
+  ?p703 prov:wasDerivedFrom ?derived.
+  ?derived pr:P248 ?reference_id.
+}
 WHERE {
 VALUES ?type { wd:Q43460564 wd:Q59199015 } # chemical entity or group of stereoisomers 
   ?compound_id wdt:P31 ?type; 
-      wdt:P703 ?taxon_id. 
-} LIMIT 10"""
+      wdt:P703 ?taxon_id;
+      p:P703 ?p703.
+  ?p703 prov:wasDerivedFrom ?derived.
+  ?derived pr:P248 ?reference_id.
+}"""
+
+    val queryIdsLocal = """$prefixes
+SELECT
+  ?compound_id ?taxon_id ?reference_id
+WHERE {
+    VALUES ?type { wd:Q43460564 wd:Q59199015 } # chemical entity or group of stereoisomers 
+    ?compound_id wdt:P31 ?type; 
+    wdt:P703 ?taxon_id;
+    p:P703/prov:wasDerivedFrom/pr:P248 ?reference_id.
+}"""
+
+    val queryTaxonParents = """$prefixes
+SELECT
+  ?parenttaxon_id
+WHERE {
+    VALUES ?id { %%IDS%% } 
+    ?id wdt:P171* ?parenttaxon_id.
+}"""
 
     val queryTaxo = """$prefixes
 SELECT
@@ -44,6 +70,16 @@ WHERE {
       wdt:P234 ?inchi;
       wdt:P235 ?inchiKey;
       p:P703/prov:wasDerivedFrom/pr:P248 ?reference.
+}
+"""
+
+    val mirrorQuery = """$prefixes
+CONSTRUCT {
+  ?id ?p ?o
+}
+WHERE { 
+  VALUES ?id { %%IDS%% }
+  ?id ?p ?o.
 }
 """
 
