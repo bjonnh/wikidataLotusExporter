@@ -13,6 +13,7 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     jcenter()
+    maven("https://kotlin.bintray.com/kotlinx")
 }
 
 application {
@@ -27,8 +28,20 @@ val jar by tasks.getting(Jar::class) {
 
 dependencies {
     val junitVersion: String by project
+    val rdf4jVersion: String by project
+    val kotlinVersion: String by project
+    val log4jVersion: String by project
 
-    implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+
+    implementation("org.eclipse.rdf4j:rdf4j-repository-sail:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-sail-nativerdf:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-core:$rdf4jVersion")
+    implementation("org.eclipse.rdf4j:rdf4j-client:$rdf4jVersion")
+
+    implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
+    implementation("org.apache.logging.log4j:log4j-core:$log4jVersion")
+    implementation("org.apache.logging.log4j:log4j-slf4j18-impl:$log4jVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
