@@ -2,7 +2,7 @@ package net.nprod.wikidataLotusExporter.sparql
 
 import org.slf4j.LoggerFactory
 
-class GetTaxonPairs {
+object LOTUSQueries {
     /**
      * Import all the wikidata taxa into a TDB2 database
      * it will ADD to the existing database, so you probably
@@ -82,41 +82,4 @@ WHERE {
   ?id ?p ?o.
 }
 """
-
-    fun main() {
-        val log = LoggerFactory.getLogger("wikidata.compoundsintaxon")
-/*
-
-        log.info("Creating a local TDB2 store for compounds in taxon")
-        val ds = TDB2Factory.connectDataset("./data/wd_compoundsintaxon")
-
-        log.info("Connecting to wikidata")
-        val conn = RDFConnectionFactory.connect("https://query.wikidata.org/sparql")
-        log.info("Making a query to get all the IDs (this should not timeout, if it does just restart)")
-        val wdIds = mutableListOf<String>()
-        conn.querySelect(queryIds) { qs ->
-            wdIds.add(qs.getResource("id").localName)
-        }
-        log.info("We have ${wdIds.size} compounds that are found in a taxon")
-        var count = 0
-        val chunkSize = 10
-        wdIds.take(20).chunked(chunkSize) { idsList ->
-            val ids = idsList.joinToString(" ") { "wd:$it" }
-            //ds.begin(ReadWrite.WRITE)
-            //val model = ds.defaultModel
-            println(queryTaxo)
-            conn.querySelect(queryTaxo.replace("%%IDS%%", ids)) { qs ->
-                println(qs)
-            }
-            //model.add(qModel)
-            //ds.commit()
-            //ds.end()
-            count += chunkSize
-            println("${100 * count / wdIds.size}%")
-
-            return@chunked
-        }
-        conn.close()
-        ds.close()*/
-    }
 }
